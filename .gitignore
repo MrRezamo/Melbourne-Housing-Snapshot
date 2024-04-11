@@ -7,7 +7,7 @@ __pycache__/
 venv/
 .env
 .env.local
-food_env
+Melbourne_Housing
 
 # VS Code directory
 .vscode/
