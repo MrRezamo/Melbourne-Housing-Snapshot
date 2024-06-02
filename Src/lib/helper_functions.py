@@ -538,6 +538,7 @@ def print_col(columns, chunk_size=5, delimiter=', '):
         print(delimiter.join(chunk))
 
 
+
 def report_missing_values(data, column_names=None, sort_by='missing_count', ascending=False):
     """
     Reports missing values for the specified columns in a DataFrame.
@@ -548,7 +549,7 @@ def report_missing_values(data, column_names=None, sort_by='missing_count', asce
     - column_names : list, optional
         The list of column names to check for missing values. If None, checks all columns.
     - sort_by : str, optional
-        Specifies whether to sort the output by 'missing_count' or 'percentage'. Default is 'missing_count'.
+        Specifies whether to sort the output by 'missing_count' or 'Percentage'. Default is 'missing_count'.
     - ascending : bool, optional
         Determines the sort order. If False, sorts in descending order. Default is False.
         
@@ -559,15 +560,17 @@ def report_missing_values(data, column_names=None, sort_by='missing_count', asce
     if column_names is None:
         column_names = data.columns
         
-    missing_data = pd.DataFrame(data[column_names].isnull().sum(), columns=['missing_count'])
-    missing_data['percentage'] = (missing_data['missing_count'] / len(data)) * 100
-    missing_data = missing_data[missing_data['missing_count'] > 0]
+    missing_data = pd.DataFrame(data[column_names].isnull().sum(), columns=['Missing_count'])
+    missing_data['Percentage'] = (missing_data['Missing_count'] / len(data)) * 100
+    missing_data = missing_data[missing_data['Missing_count'] > 0]
     
-    if sort_by not in ['missing_count', 'percentage']:
-        raise ValueError("sort_by must be 'missing_count' or 'percentage'")
+    if sort_by not in ['Missing_count', 'Percentage']:
+        raise ValueError("sort_by must be 'missing_count' or 'Percentage'")
     
-    missing_data = missing_data.sort_values(by=sort_by, ascending=ascending).reset_index().rename(columns={'index': 'column'})
+    missing_data = missing_data.sort_values(by=sort_by, ascending=ascending).reset_index().rename(columns={'index': 'Column'})
     
+    print("Missing Data Report:")
+    print(missing_data)  # Debug print to check the structure
     return missing_data
 
 
@@ -584,23 +587,34 @@ def plot_missing_values(missing_df, threshold=50, figsize=(20, 8)):
     - figsize: tuple, optional
         The size of the figure to be plotted. Default is (20, 8).
     """
+
+    # Filter columns based on the threshold
+    filtered_df = missing_df[missing_df['Percentage'] > threshold]
+    
+    if filtered_df.empty:
+        print(f"No columns with missing values above {threshold}% threshold.")
+        return
+    
+    print("Filtered Data for Plotting:")
+    print(filtered_df)  # Debug print to check the structure
+
     # Define colors based on the percentage threshold
-    colors = ['#d9534f' if x > threshold else '#5bc0de' for x in missing_df['Percentage']]
+    colors = ['#d9534f' if x > threshold else '#5bc0de' for x in filtered_df['Percentage']]
     
     plt.figure(figsize=figsize)
-    barplot = sns.barplot(x='Percentage', y='Column', data=missing_df, palette=colors)
+    barplot = sns.barplot(x='Percentage', y='Column', data=filtered_df, palette=colors)
     plt.title('Percentage of Missing Values by Column')
     plt.xlabel('Percentage')
     plt.ylabel('Column')
     
-    # Drawing a horizontal line at the threshold percentage
+    # Draw a vertical line at the threshold percentage
     plt.axvline(x=threshold, color='black', linestyle='--', label=f'{threshold}% Missing Values')
     plt.legend()
 
     # Annotate each bar with the percentage of missing values
     for p in barplot.patches:
         width = p.get_width()
-        plt.text(2 + width, p.get_y() + p.get_height() / 2,
+        plt.text(width + 2, p.get_y() + p.get_height() / 2,
                  '{:1.2f}%'.format(width), ha='left', va='center')
     
     plt.tight_layout()
